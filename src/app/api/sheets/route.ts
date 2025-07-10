@@ -1,25 +1,40 @@
 import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
 
-export async function OPTIONS() {
+// Dynamic CORS configuration for multi-environments
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://incredibleplaygroupfinder.ca",
+  "https://ipf-web.vercel.app",
+  "https://parent-resource.vercel.app",
+];
+
+function getCorsHeaders(origin: string | null) {
+  const isAllowedOrigin = allowedOrigins.includes(origin || "");
+
+  return {
+    "Access-Control-Allow-Origin": isAllowedOrigin ? origin! : "null",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: corsHeaders,
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await getSheetData();
+    const origin = request.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin);
 
-    console.log("✅ Sheet data fetched:", {
-      totalRows: result.data.length,
-      firstRow: result.data[0],
-    });
+    const result = await getSheetData();
 
     return NextResponse.json(
       {
@@ -30,15 +45,11 @@ export async function GET() {
         },
       },
       {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
+        headers: corsHeaders,
       }
     );
   } catch (error) {
-    console.error("❌ Error fetching sheet data:", error);
+    console.error("Error fetching sheet data:", error);
     return NextResponse.json(
       { error: "Failed to load sheet data" },
       { status: 500 }
