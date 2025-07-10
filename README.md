@@ -1,36 +1,241 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Incredible Playgroup Finder - Backend API
 
-## Getting Started
+A Next.js backend API that serves playgroup data from Google Sheets to the Incredible Playgroup Finder mobile application.
 
-First, run the development server:
+## 🚀 Overview
+
+This backend provides RESTful API endpoints that fetch and process playgroup data from Google Sheets, making it available for the React Native mobile application. The API includes caching mechanisms and data transformation utilities to ensure optimal performance.
+
+## 📁 Project Structure
+
+```
+ipf-backend/
+├── src/
+│   └── app/
+│       ├── api/
+│       │   ├── sheets/
+│       │   │   └── route.ts          # Google Sheets data endpoint
+│       │   └── markers/
+│       │       └── route.ts          # Map markers endpoint
+│       └── utils/
+│           ├── getSheetData.ts       # Google Sheets integration
+│           ├── transformDataToObjects.ts  # Data transformation
+│           ├── TTLCache.ts          # Caching utility
+│           └── types.ts             # TypeScript interfaces
+├── package.json
+└── README.md
+```
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **External APIs:** Google Sheets API
+- **Caching:** Custom TTL Cache implementation
+- **Authentication:** Google Service Account
+
+## 🔧 Setup & Installation
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Google Cloud Project with Sheets API enabled
+- Google Service Account credentials
+
+### 1. Clone and Install Dependencies
+
+```bash
+git clone <repository-url>
+cd ipf-backend
+npm install
+```
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Google Sheets Configuration
+GOOGLE_SHEETS_PROJECT_ID=your-project-id
+GOOGLE_SHEETS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SHEETS_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+GOOGLE_SHEET_ID=your-spreadsheet-id
+
+# Optional: Base URL for development
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+### 3. Google Sheets Setup
+
+1. **Create a Google Cloud Project**
+2. **Enable Google Sheets API**
+3. **Create a Service Account**
+4. **Download the JSON credentials**
+5. **Share your Google Sheet with the service account email**
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The API will be available at `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📡 API Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. GET `/api/sheets`
 
-## Learn More
+Fetches raw playgroup data from Google Sheets.
 
-To learn more about Next.js, take a look at the following resources:
+**Response:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "Name": "Playgroup Name",
+      "Address": "123 Main St",
+      "lat": "40.7128",
+      "lng": "-74.0060",
+      "Age": "2-4 years",
+      "Schedule": "Mon-Fri 9AM-12PM"
+      // ... other fields
+    }
+  ]
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. GET `/api/markers`
 
-## Deploy on Vercel
+Fetches processed map markers with valid coordinates and deduplication.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Response:**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```json
+{
+  "markers": [
+    {
+      "id": "1",
+      "Name": "Playgroup Name",
+      "Address": "123 Main St",
+      "lat": "40.7128",
+      "lng": "-74.0060"
+      // ... other fields
+    }
+  ]
+}
+```
+
+**Features:**
+
+- Filters out entries without valid lat/lng coordinates
+- Deduplicates by address
+- Optimized for map display
+
+## 🔧 Core Utilities
+
+### `getSheetData()`
+
+- Fetches data from Google Sheets
+- Implements 15-minute TTL caching
+- Handles authentication and error management
+
+### `transformDataToObjects()`
+
+- Converts Google Sheets array format to objects
+- Maps headers to object properties
+- Handles data type conversion
+
+### `TTLCache`
+
+- Custom caching implementation
+- Configurable time-to-live
+- Memory-efficient storage
+
+## 📊 Data Flow
+
+1. **Request** → API endpoint
+2. **Cache Check** → Check if data is cached
+3. **Google Sheets** → Fetch fresh data if needed
+4. **Transform** → Convert to usable format
+5. **Cache** → Store for future requests
+6. **Response** → Return processed data
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. **Connect your repository to Vercel**
+2. **Set environment variables in Vercel dashboard**
+3. **Deploy automatically on push to main branch**
+
+### Environment Variables for Production
+
+Ensure all Google Sheets environment variables are set in your deployment platform.
+
+## 🔒 Security
+
+- **Service Account Authentication:** Secure Google Sheets access
+- **Environment Variables:** Sensitive data not in code
+- **CORS:** Configure as needed for your frontend
+- **Rate Limiting:** Consider implementing for production
+
+## 🧪 Testing
+
+```bash
+# Run tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+```
+
+## 📝 API Documentation
+
+### Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "error": "Error message description"
+}
+```
+
+**Status Codes:**
+
+- `200` - Success
+- `500` - Server error
+- `404` - Endpoint not found
+
+### Caching
+
+- **Cache Duration:** 15 minutes
+- **Cache Key:** "sheetData"
+- **Cache Invalidation:** Automatic TTL expiration
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+[Add your license information here]
+
+## 🆘 Support
+
+For issues and questions:
+
+- Create an issue in the repository
+- Contact the development team
+- Check the documentation
+
+---
+
+**Built with ❤️ for the Incredible Playgroup Finder community**
