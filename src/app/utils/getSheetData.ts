@@ -1,13 +1,13 @@
 import { google } from "googleapis";
 import { transformDataToObjects } from "./transformDataToObjects";
 import { TTLCache } from "./TTLCache";
+import { SheetEntry, SheetDataResponse } from "./types";
 
-const sheetCache = new TTLCache<any[]>(1000 * 60 * 15); // 15 minutes
+const sheetCache = new TTLCache<SheetEntry[]>(1000 * 60 * 15); // 15 minutes
 
-export async function getSheetData() {
+export async function getSheetData(): Promise<SheetDataResponse> {
   const cacheKey = "sheetData";
 
-  // Try to get cached data
   const cachedData = sheetCache.get(cacheKey);
   if (cachedData) {
     console.log("Returning cached sheet data");
@@ -21,10 +21,7 @@ export async function getSheetData() {
       projectId: process.env.GOOGLE_SHEETS_PROJECT_ID,
       credentials: {
         type: "service_account",
-        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(
-          /\\n/g,
-          "\n"
-        ),
+        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n"),
         client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
       },
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -37,9 +34,10 @@ export async function getSheetData() {
       range: "MainSheet!A:AL",
     });
 
-    const transformed = transformDataToObjects<any>(result.data.values || []);
+    const rawValues = result.data.values as string[][]; 
 
-    // Cache the result
+    const transformed = transformDataToObjects<SheetEntry>(rawValues);
+
     sheetCache.set(cacheKey, transformed);
     console.log("New sheet data cached");
 

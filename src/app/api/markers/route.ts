@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
+import { SheetEntry } from "../../utils/types";
 
 export async function GET() {
   try {
     const { data: sheetData } = await getSheetData();
 
     // Step 1: Keep rows with valid lat/lng
-    const markersWithLatLng = sheetData.filter((entry: any) => {
-      const lat = parseFloat(entry.lat);
-      const lng = parseFloat(entry.lng);
+    const markersWithLatLng = sheetData.filter((entry: SheetEntry) => {
+      const lat = parseFloat(entry.lat || "");
+      const lng = parseFloat(entry.lng || "");
       return !isNaN(lat) && !isNaN(lng);
     });
 
     // Step 2: Deduplicate by address
     const addresses = new Set<string>();
-    const uniqueMarkers = markersWithLatLng.filter((entry: any) => {
-      if (addresses.has(entry.Address)) return false;
-      addresses.add(entry.Address);
+    const uniqueMarkers = markersWithLatLng.filter((entry: SheetEntry) => {
+      if (addresses.has(entry.Address || "")) return false;
+      addresses.add(entry.Address || "");
       return true;
     });
 
