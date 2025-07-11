@@ -41,14 +41,28 @@ export async function OPTIONS(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const origin = request.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin);
+
     const { data: sheetData } = await getSheetData();
 
     // Step 1: Keep rows with valid lat/lng
-    const markersWithLatLng = sheetData.filter((entry: SheetEntry) => {
-      const lat = parseFloat(entry.lat || "");
-      const lng = parseFloat(entry.lng || "");
-      return !isNaN(lat) && !isNaN(lng);
-    });
+    const markersWithLatLng = sheetData
+      .map((entry: SheetEntry) => {
+        const lat = parseFloat(entry.lat || "");
+        const lng = parseFloat(entry.lng || "");
+        if (isNaN(lat) || isNaN(lng)) return null;
+
+        return {
+          ...entry,
+          lat,
+          lng,
+        };
+      })
+      .filter(
+        (entry): entry is SheetEntry & { lat: number; lng: number } =>
+          entry !== null
+      );
 
     // Step 2: Deduplicate by address
     const addresses = new Set<string>();
@@ -58,7 +72,10 @@ export async function GET(request: Request) {
       return true;
     });
 
-    return NextResponse.json({ markers: uniqueMarkers });
+    return NextResponse.json(
+      { markers: uniqueMarkers },
+      { headers: corsHeaders }
+    );
   } catch (err) {
     console.error("Error generating markers:", err);
     return NextResponse.json(
