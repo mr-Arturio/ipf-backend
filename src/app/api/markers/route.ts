@@ -3,6 +3,14 @@ import { getSheetData } from "../../utils/getSheetData";
 import { SheetEntry } from "../../utils/types";
 import { applyFilters } from "../../utils/applyFilters";
 
+// Type for processed markers with lat/lng as numbers
+interface ProcessedMarker {
+  [key: string]: string | number | undefined;
+  lat: number;
+  lng: number;
+  Address?: string;
+}
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://localhost:3000",
@@ -67,7 +75,9 @@ export async function GET(request: Request) {
     }
 
     // Process markers: filter valid lat/lng and deduplicate by address
-    const markers = filteredData.reduce((acc: any[], entry: SheetEntry) => {
+    const markers: ProcessedMarker[] = [];
+
+    for (const entry of filteredData) {
       const lat = parseFloat(entry.lat || "");
       const lng = parseFloat(entry.lng || "");
       const address = entry.Address?.trim();
@@ -76,12 +86,11 @@ export async function GET(request: Request) {
         !isNaN(lat) &&
         !isNaN(lng) &&
         address &&
-        !acc.some((m) => m.Address === address)
+        !markers.some((m) => m.Address === address)
       ) {
-        acc.push({ ...entry, lat, lng });
+        markers.push({ ...entry, lat, lng });
       }
-      return acc;
-    }, []);
+    }
 
     return NextResponse.json({ markers }, { headers: corsHeaders });
   } catch (err) {
