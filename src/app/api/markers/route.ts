@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
 import { SheetEntry } from "../../utils/types";
+import { applyFilters } from "../../utils/applyFilters";
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -13,19 +14,18 @@ const allowedOrigins = [
 function getCorsHeaders(origin: string | null) {
   const isAllowedOrigin = allowedOrigins.includes(origin || "");
 
-  // Warn in console if blocked (only in dev)
   if (!isAllowedOrigin && process.env.NODE_ENV === "development") {
-    console.warn("⚠️ Blocked CORS request from:", origin);
+    console.warn("\u26A0\uFE0F Blocked CORS request from:", origin);
   }
 
   return {
     "Access-Control-Allow-Origin": isAllowedOrigin
-    ? origin || allowedOrigins[0]
-    : allowedOrigins[0],
+      ? origin || allowedOrigins[0]
+      : allowedOrigins[0],
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 
@@ -44,38 +44,46 @@ export async function GET(request: Request) {
     const origin = request.headers.get("origin");
     const corsHeaders = getCorsHeaders(origin);
 
+    // Get query parameters for filtering
+    const { searchParams } = new URL(request.url);
+    const filterParams = {
+      date: searchParams.get("date") || "",
+      area: searchParams.get("area") || "",
+      language: searchParams.get("language") || "",
+      day: searchParams.get("day") || "",
+      organizer: searchParams.get("organizer") || "",
+      age: searchParams.get("age") || "",
+      time: searchParams.get("time") || "",
+      address: searchParams.get("address") || "",
+    };
+
     const { data: sheetData } = await getSheetData();
 
-    // Step 1: Keep rows with valid lat/lng
-    const markersWithLatLng = sheetData
-      .map((entry: SheetEntry) => {
-        const lat = parseFloat(entry.lat || "");
-        const lng = parseFloat(entry.lng || "");
-        if (isNaN(lat) || isNaN(lng)) return null;
+    // Apply filters if any are provided
+    let filteredData = sheetData;
 
-        return {
-          ...entry,
-          lat,
-          lng,
-        };
-      })
-      .filter(
-        (entry): entry is SheetEntry & { lat: number; lng: number } =>
-          entry !== null
-      );
+    if (Object.values(filterParams).some((param) => param !== "")) {
+      filteredData = applyFilters(sheetData, filterParams);
+    }
 
-    // Step 2: Deduplicate by address
-    const addresses = new Set<string>();
-    const uniqueMarkers = markersWithLatLng.filter((entry: SheetEntry) => {
-      if (addresses.has(entry.Address || "")) return false;
-      addresses.add(entry.Address || "");
-      return true;
-    });
+    // Process markers: filter valid lat/lng and deduplicate by address
+    const markers = filteredData.reduce((acc: any[], entry: SheetEntry) => {
+      const lat = parseFloat(entry.lat || "");
+      const lng = parseFloat(entry.lng || "");
+      const address = entry.Address?.trim();
 
-    return NextResponse.json(
-      { markers: uniqueMarkers },
-      { headers: corsHeaders }
-    );
+      if (
+        !isNaN(lat) &&
+        !isNaN(lng) &&
+        address &&
+        !acc.some((m) => m.Address === address)
+      ) {
+        acc.push({ ...entry, lat, lng });
+      }
+      return acc;
+    }, []);
+
+    return NextResponse.json({ markers }, { headers: corsHeaders });
   } catch (err) {
     console.error("Error generating markers:", err);
     return NextResponse.json(
