@@ -2,23 +2,19 @@ import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
 import { SheetEntry } from "../../utils/types";
 
-// Determine if we're in development mode
-const isDev = process.env.NODE_ENV === "development";
-
-// Dynamic CORS configuration for multi-environments
-const allowedOrigins = isDev
-  ? ["http://localhost:3000", "https://localhost:3000"]
-  : [
-      "https://incredibleplaygroupfinder.ca",
-      "https://ipf-web.vercel.app",
-      "https://parent-resource.vercel.app",
-    ];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://localhost:3000",
+  "https://incredibleplaygroupfinder.ca",
+  "https://ipf-web.vercel.app",
+  "https://parent-resource.vercel.app",
+];
 
 function getCorsHeaders(origin: string | null) {
   const isAllowedOrigin = allowedOrigins.includes(origin || "");
 
-  // Warn about blocked CORS origin (in dev only)
-  if (!isAllowedOrigin && isDev) {
+  // Warn in console if blocked (only in dev)
+  if (!isAllowedOrigin && process.env.NODE_ENV === "development") {
     console.warn("⚠️ Blocked CORS request from:", origin);
   }
 
