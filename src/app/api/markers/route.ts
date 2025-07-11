@@ -63,6 +63,7 @@ export async function GET(request: Request) {
       time: searchParams.get("time") || "",
       address: searchParams.get("address") || "",
     };
+    const translation = searchParams.get("translation") || "en";
 
     const { data: sheetData } = await getSheetData();
 
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
     let filteredData = sheetData;
 
     if (Object.values(filterParams).some((param) => param !== "")) {
-      filteredData = applyFilters(sheetData, filterParams);
+      filteredData = applyFilters(sheetData, filterParams, translation);
     }
 
     // Process markers: filter valid lat/lng and deduplicate by address
