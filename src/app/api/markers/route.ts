@@ -67,12 +67,8 @@ export async function GET(request: Request) {
 
     const { data: sheetData } = await getSheetData();
 
-    // Apply filters if any are provided
-    let filteredData = sheetData;
-
-    if (Object.values(filterParams).some((param) => param !== "")) {
-      filteredData = applyFilters(sheetData, filterParams, translation);
-    }
+    // Always apply filters to exclude past events, even if no other filters are provided
+    const filteredData = applyFilters(sheetData, filterParams, translation);
 
     // Process markers: filter valid lat/lng and deduplicate by address
     const markers: ProcessedMarker[] = [];
