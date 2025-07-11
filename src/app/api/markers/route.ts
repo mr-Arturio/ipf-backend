@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
-import { SheetEntry } from "../../utils/types";
 import { applyFilters } from "../../utils/applyFilters";
 
 // Type for processed markers with lat/lng as numbers
