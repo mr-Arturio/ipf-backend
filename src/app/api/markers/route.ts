@@ -23,9 +23,13 @@ function getCorsHeaders(origin: string | null) {
   }
 
   return {
-    "Access-Control-Allow-Origin": isAllowedOrigin ? origin! : "null",
+    "Access-Control-Allow-Origin": isAllowedOrigin
+    ? origin || allowedOrigins[0]
+    : allowedOrigins[0],
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Vary": "Origin",
   };
 }
 
