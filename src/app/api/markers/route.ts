@@ -2,7 +2,44 @@ import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
 import { SheetEntry } from "../../utils/types";
 
-export async function GET() {
+// Determine if we're in development mode
+const isDev = process.env.NODE_ENV === "development";
+
+// Dynamic CORS configuration for multi-environments
+const allowedOrigins = isDev
+  ? ["http://localhost:3000", "https://localhost:3000"]
+  : [
+      "https://incredibleplaygroupfinder.ca",
+      "https://ipf-web.vercel.app",
+      "https://parent-resource.vercel.app",
+    ];
+
+function getCorsHeaders(origin: string | null) {
+  const isAllowedOrigin = allowedOrigins.includes(origin || "");
+
+  // Warn about blocked CORS origin (in dev only)
+  if (!isAllowedOrigin && isDev) {
+    console.warn("⚠️ Blocked CORS request from:", origin);
+  }
+
+  return {
+    "Access-Control-Allow-Origin": isAllowedOrigin ? origin! : "null",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
+  return new NextResponse(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
+export async function GET(request: Request) {
   try {
     const { data: sheetData } = await getSheetData();
 

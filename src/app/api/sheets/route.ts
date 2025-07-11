@@ -2,15 +2,22 @@ import { NextResponse } from "next/server";
 import { getSheetData } from "../../utils/getSheetData";
 
 // Dynamic CORS configuration for multi-environments
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://incredibleplaygroupfinder.ca",
-  "https://ipf-web.vercel.app",
-  "https://parent-resource.vercel.app",
-];
+const isDev = process.env.NODE_ENV === "development";
+
+const allowedOrigins = isDev
+  ? ["http://localhost:3000", "https://localhost:3000"]
+  : [
+      "https://incredibleplaygroupfinder.ca",
+      "https://ipf-web.vercel.app",
+      "https://parent-resource.vercel.app",
+    ];
 
 function getCorsHeaders(origin: string | null) {
   const isAllowedOrigin = allowedOrigins.includes(origin || "");
+
+  if (!isAllowedOrigin && isDev) {
+    console.warn("⚠️ Blocked CORS request from:", origin);
+  }
 
   return {
     "Access-Control-Allow-Origin": isAllowedOrigin ? origin! : "null",
