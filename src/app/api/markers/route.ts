@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getSheetData } from "../../utils/getSheetData";
-import { applyFilters } from "../../utils/applyFilters";
+import { getSheetData } from "@/app/utils/getSheetData";
+import { applyFilters } from "@/app/utils/applyFilters";
+import { getCorsHeaders } from "@/app/utils/cors";
 
 // Type for processed markers with lat/lng as numbers
 interface ProcessedMarker {
@@ -8,34 +9,6 @@ interface ProcessedMarker {
   lat: number;
   lng: number;
   Address?: string;
-}
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://localhost:3000",
-  "http://localhost:3001",
-  "https://localhost:3001",
-  "https://incredibleplaygroupfinder.ca",
-  "https://ipf-web.vercel.app",
-  "https://parent-resource.vercel.app",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const isAllowedOrigin = allowedOrigins.includes(origin || "");
-
-  if (!isAllowedOrigin && process.env.NODE_ENV === "development") {
-    console.warn("\u26A0\uFE0F Blocked CORS request from:", origin);
-  }
-
-  return {
-    "Access-Control-Allow-Origin": isAllowedOrigin
-      ? origin || allowedOrigins[0]
-      : allowedOrigins[0],
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    Vary: "Origin",
-  };
 }
 
 export async function OPTIONS(request: Request) {
