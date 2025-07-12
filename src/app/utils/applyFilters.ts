@@ -52,24 +52,20 @@ export function applyFilters(
     today.setHours(0, 0, 0, 0); // Normalize to start of the day in local time
 
     // Function to translate filter criteria from French to English
-    const translateCriteria = (value: string, type?: string): string => {
-      if (
-        translation === "fr" &&
-        translationMappings.fr &&
-        translationMappings.fr[value]
-      ) {
+    const translateCriteria = (value: string): string => {
+      if (translation === "fr" && translationMappings.fr[value]) {
         return translationMappings.fr[value];
       }
       return value;
     };
 
     const translatedCriteria = {
-      area: translateCriteria(filterCriteria.area || "", "area"),
-      language: translateCriteria(filterCriteria.language || "", "language"),
-      day: translateCriteria(filterCriteria.day || "", "day"),
+      area: translateCriteria(filterCriteria.area || ""),
+      language: translateCriteria(filterCriteria.language || ""),
+      day: translateCriteria(filterCriteria.day || ""),
       organizer: filterCriteria.organizer || "",
-      age: translateCriteria(filterCriteria.age || "", "age"),
-      time: translateCriteria(filterCriteria.time || "", "time"),
+      age: translateCriteria(filterCriteria.age || ""),
+      time: translateCriteria(filterCriteria.time || ""),
       date: filterCriteria.date || "",
       address: filterCriteria.address || "",
     };
