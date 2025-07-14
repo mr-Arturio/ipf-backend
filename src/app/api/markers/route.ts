@@ -42,8 +42,13 @@ export async function GET(request: Request) {
 
     const { data: sheetData } = await getSheetData();
 
-    // Always apply filters to exclude past events, even if no other filters are provided
+    // Apply filters including date filtering
     const filteredData = applyFilters(sheetData, filterParams, translation);
+
+    console.log(
+      `🎯 Markers API: Filtered ${sheetData.length} -> ${filteredData.length} items`
+    );
+    console.log(`📅 Date filter: ${filterParams.date}`);
 
     // Process markers: filter valid lat/lng and deduplicate by address
     const markers: ProcessedMarker[] = [];
@@ -63,6 +68,9 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log(
+      `🗺️ Markers API: Returning ${markers.length} markers from ${filteredData.length} filtered items`
+    );
     return NextResponse.json({ markers }, { headers: corsHeaders });
   } catch (err) {
     console.error("Error generating markers:", err);
