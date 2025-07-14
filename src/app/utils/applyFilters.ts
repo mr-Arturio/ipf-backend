@@ -1,11 +1,5 @@
 import { SheetEntry } from "./types";
-
-// Translation mappings for French to English
-const translationMappings: Record<string, Record<string, string>> = {
-  fr: {
-    // Add French translations here if needed
-  },
-};
+import { translationMappings } from "./translationMappings";
 
 // Age mapping for hierarchical filters
 const ageMapping: Record<string, string[]> = {
@@ -59,11 +53,7 @@ export function applyFilters(
 
     // Function to translate filter criteria from French to English
     const translateCriteria = (value: string): string => {
-      if (
-        translation === "fr" &&
-        translationMappings.fr &&
-        translationMappings.fr[value]
-      ) {
+      if (translation === "fr" && translationMappings.fr[value]) {
         return translationMappings.fr[value];
       }
       return value;
@@ -113,10 +103,7 @@ export function applyFilters(
       .filter((item) => {
         // Address filter
         const itemAddress = getStringValue(item.Address);
-        if (
-          translatedCriteria.address &&
-          itemAddress !== translatedCriteria.address
-        ) {
+        if (filterCriteria.address && itemAddress !== filterCriteria.address) {
           return false;
         }
 
@@ -185,14 +172,15 @@ export function applyFilters(
         }
 
         // Specific date filter
+        const displayDate = itemEventDate || "";
         if (
           translatedCriteria.date &&
-          itemEventDate !== translatedCriteria.date
+          displayDate !== translatedCriteria.date
         ) {
           return false;
         }
 
-        return true;
+        return isUpcomingEvent;
       })
       .sort((a, b) => {
         const { startTime: timeA } = categorizeTime(getStringValue(a.Time));

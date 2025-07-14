@@ -1,32 +1,7 @@
 import { NextResponse } from "next/server";
-import { getSheetData } from "../../utils/getSheetData";
+import { getSheetData } from "@/app/utils/getSheetData";
+import { getCorsHeaders } from "@/app/utils/cors";
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://localhost:3000",
-  "https://incredibleplaygroupfinder.ca",
-  "https://ipf-web.vercel.app",
-  "https://parent-resource.vercel.app",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const isAllowedOrigin = allowedOrigins.includes(origin || "");
-
-  // Warn in console if blocked (only in dev)
-  if (!isAllowedOrigin && process.env.NODE_ENV === "development") {
-    console.warn("⚠️ Blocked CORS request from:", origin);
-  }
-
-  return {
-    "Access-Control-Allow-Origin": isAllowedOrigin
-      ? origin || allowedOrigins[0]
-      : allowedOrigins[0],
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Vary": "Origin",
-  };
-}
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get("origin");

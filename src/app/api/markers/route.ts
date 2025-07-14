@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getSheetData } from "../../utils/getSheetData";
-import { applyFilters } from "../../utils/applyFilters";
+import { getSheetData } from "@/app/utils/getSheetData";
+import { applyFilters } from "@/app/utils/applyFilters";
+import { getCorsHeaders } from "@/app/utils/cors";
 
 // Type for processed markers with lat/lng as numbers
 interface ProcessedMarker {
@@ -8,32 +9,6 @@ interface ProcessedMarker {
   lat: number;
   lng: number;
   Address?: string;
-}
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://localhost:3000",
-  "https://incredibleplaygroupfinder.ca",
-  "https://ipf-web.vercel.app",
-  "https://parent-resource.vercel.app",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const isAllowedOrigin = allowedOrigins.includes(origin || "");
-
-  if (!isAllowedOrigin && process.env.NODE_ENV === "development") {
-    console.warn("\u26A0\uFE0F Blocked CORS request from:", origin);
-  }
-
-  return {
-    "Access-Control-Allow-Origin": isAllowedOrigin
-      ? origin || allowedOrigins[0]
-      : allowedOrigins[0],
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    Vary: "Origin",
-  };
 }
 
 export async function OPTIONS(request: Request) {
@@ -67,8 +42,13 @@ export async function GET(request: Request) {
 
     const { data: sheetData } = await getSheetData();
 
-    // Always apply filters to exclude past events, even if no other filters are provided
+    // Apply filters including date filtering
     const filteredData = applyFilters(sheetData, filterParams, translation);
+
+    console.log(
+      `🎯 Markers API: Filtered ${sheetData.length} -> ${filteredData.length} items`
+    );
+    console.log(`📅 Date filter: ${filterParams.date}`);
 
     // Process markers: filter valid lat/lng and deduplicate by address
     const markers: ProcessedMarker[] = [];
@@ -88,6 +68,9 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log(
+      `🗺️ Markers API: Returning ${markers.length} markers from ${filteredData.length} filtered items`
+    );
     return NextResponse.json({ markers }, { headers: corsHeaders });
   } catch (err) {
     console.error("Error generating markers:", err);
