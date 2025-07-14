@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSheetData } from "@/app/utils/getSheetData";
 import { applyFilters } from "@/app/utils/applyFilters";
 import { getCorsHeaders } from "@/app/utils/cors";
+import { SheetEntry } from "@/app/utils/types";
 
 // Simple in-memory cache with TTL
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: SheetEntry[]; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-function getCacheKey(filters: any, translation: any): string {
+function getCacheKey(
+  filters: Record<string, string>,
+  translation: Record<string, string>
+): string {
   return JSON.stringify({ filters, translation });
 }
 
